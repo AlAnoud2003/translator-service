@@ -1,34 +1,53 @@
-def translate_content(content: str) -> tuple[bool, str]:
-    if content == "这是一条中文消息":
-        return False, "This is a Chinese message"
-    if content == "Ceci est un message en français":
-        return False, "This is a French message"
-    if content == "Esta es un mensaje en español":
-        return False, "This is a Spanish message"
-    if content == "Esta é uma mensagem em português":
-        return False, "This is a Portuguese message"
-    if content  == "これは日本語のメッセージです":
-        return False, "This is a Japanese message"
-    if content == "이것은 한국어 메시지입니다":
-        return False, "This is a Korean message"
-    if content == "Dies ist eine Nachricht auf Deutsch":
-        return False, "This is a German message"
-    if content == "Questo è un messaggio in italiano":
-        return False, "This is an Italian message"
-    if content == "Это сообщение на русском":
-        return False, "This is a Russian message"
-    if content == "هذه رسالة باللغة العربية":
-        return False, "This is an Arabic message"
-    if content == "यह हिंदी में संदेश है":
-        return False, "This is a Hindi message"
-    if content == "นี่คือข้อความภาษาไทย":
-        return False, "This is a Thai message"
-    if content == "Bu bir Türkçe mesajdır":
-        return False, "This is a Turkish message"
-    if content == "Đây là một tin nhắn bằng tiếng Việt":
-        return False, "This is a Vietnamese message"
-    if content == "Esto es un mensaje en catalán":
-        return False, "This is a Catalan message"
-    if content == "This is an English message":
-        return True, "This is an English message"
-    return True, content
+import openai
+
+def query_llm(post: str) -> tuple[bool, str]:
+    # Query the OpenAI API for a response to the post
+    try:
+        # Assuming `deployment_name` is set to the engine you've deployed
+        response = openai.ChatCompletion.create(
+            engine="translator-codehers",  # Use your engine/deployment name
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": post}
+            ],
+            max_tokens=150  # Adjust the token limit if needed
+        )
+
+        # Extract the response text from the model's output
+        llm_response = response['choices'][0]['message']['content']
+
+        # Evaluate whether the response is coherent and valid
+        is_valid = len(llm_response.strip()) > 0  # Check if the response is non-empty
+
+        # Return a tuple (True/False, response text)
+        return (is_valid, llm_response)
+
+    except Exception as e:
+        # Handle API errors or other exceptions
+        print(f"Error querying LLM: {e}")
+        return (False, "An error occurred while processing the request.")
+
+
+############################################################################################################
+
+def query_llm_robust(post: str) -> tuple[bool, str]:
+  try:
+      response = query_llm(post)  # Assuming query_llm returns a tuple
+
+      if isinstance(response, tuple) and len(response) == 2:
+          validity, response_text = response
+
+          if isinstance(validity, bool) and isinstance(response_text, str):
+                return response  # Return the valid response as is
+          else:
+                print("Unexpected format: response elements are not of the expected type.")
+                return (False, "Error: Invalid response format")
+
+      else:
+           print("Unexpected format: response is not a tuple or has incorrect length.")
+           return (False, "Error: Invalid response format")
+
+  except Exception as e:
+      print(f"Error querying the model: {e}")
+      return (False, "Error: Unable to retrieve response from model")
+  
